@@ -1,23 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
-  <title>Water Quest</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drop Catch | charity: water</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Water Quest</h1>
-    <p class="game-instructions">Collect 20 items to complete the game!</p>
-    <div class="stats">
-      <p>Cans Collected: <span id="current-cans">0</span></p>
-      <p>Time Left: <span id="timer">30</span>s</p>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="can-icon" aria-hidden="true"></span>
+      <span class="brand-name">charity<span class="colon">:</span> water</span>
     </div>
-    <div id="achievements" class="achievement"></div>
-    <div class="game-grid"></div>
-    <button id="start-game">Start Game</button>
-  </div>
+    <span class="game-title">DROP CATCH</span>
+  </header>
+
+  <main class="wrap">
+
+    <section class="hud" aria-label="Game status">
+      <div class="stat">
+        <span class="stat-value" id="timeLeft">30</span>
+        <span class="stat-label">seconds left</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="score">0</span>
+        <span class="stat-label">litres delivered</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value" id="goal">40</span>
+        <span class="stat-label">goal</span>
+      </div>
+    </section>
+
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <section class="field" id="field" aria-label="Play area">
+      <div class="overlay" id="overlay">
+        <h2 class="overlay-title" id="overlayTitle">Catch the clean water</h2>
+        <p class="overlay-text" id="overlayText">
+          Click the blue drops to collect clean water. Avoid the brown ones:
+          they contaminate your jerry can and halve what you collect until you dump it.
+        </p>
+        <button class="btn btn-primary" id="startBtn">Start</button>
+      </div>
+      <canvas class="confetti" id="confetti"></canvas>
+    </section>
+
+    <div class="status-row">
+      <p class="status" id="status">Press start when you're ready.</p>
+      <div class="controls">
+        <button class="btn btn-warn" id="dumpBtn" disabled>Dump can (-5 L)</button>
+        <button class="btn btn-ghost" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <p class="footnote">
+      771 million people lack access to clean water.
+      <a href="https://www.charitywater.org" target="_blank" rel="noopener">charitywater.org</a>
+    </p>
+
+  </main>
+
   <script src="script.js"></script>
 </body>
 </html>
