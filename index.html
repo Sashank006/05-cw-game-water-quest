@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Drop Catch | charity: water</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -44,6 +47,14 @@
           Click the blue drops to collect clean water. Avoid the brown ones:
           they contaminate your jerry can and halve what you collect until you dump it.
         </p>
+
+        <div class="difficulty" role="group" aria-label="Choose a difficulty">
+          <button class="diff-btn" data-level="easy" type="button">Easy</button>
+          <button class="diff-btn active" data-level="normal" type="button">Normal</button>
+          <button class="diff-btn" data-level="hard" type="button">Hard</button>
+        </div>
+        <p class="difficulty-note" id="difficultyNote">Normal: 40 litres, steady drops, some contamination.</p>
+
         <button class="btn btn-primary" id="startBtn">Start</button>
       </div>
       <canvas class="confetti" id="confetti"></canvas>
@@ -54,15 +65,28 @@
       <div class="controls">
         <button class="btn btn-warn" id="dumpBtn" disabled>Dump can (-5 L)</button>
         <button class="btn btn-ghost" id="resetBtn">Reset</button>
+        <button class="btn btn-ghost" id="muteBtn" aria-pressed="false">Sound on</button>
       </div>
     </div>
 
-    <p class="footnote">
-      771 million people lack access to clean water.
-      <a href="https://www.charitywater.org" target="_blank" rel="noopener">charitywater.org</a>
-    </p>
-
   </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p class="footer-lead">771 million people lack access to clean water.</p>
+      <p class="footer-text">
+        This game is a student project. The problem it is about is real, and
+        charity: water sends 100% of public donations straight to funding water projects.
+      </p>
+      <nav class="footer-links" aria-label="charity: water links">
+        <a href="https://www.charitywater.org" target="_blank" rel="noopener">charity: water</a>
+        <a href="https://www.charitywater.org/donate" target="_blank" rel="noopener">Donate</a>
+        <a href="https://www.charitywater.org/global-water-crisis" target="_blank" rel="noopener">The water crisis</a>
+        <a href="https://www.charitywater.org/our-work" target="_blank" rel="noopener">Our work</a>
+      </nav>
+      <p class="footer-fine">Built by Sashank Kadiveti. Not affiliated with charity: water.</p>
+    </div>
+  </footer>
 
   <script src="script.js"></script>
 </body>

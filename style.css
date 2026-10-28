@@ -17,7 +17,7 @@
 }
 
 body {
-  font-family: "Segoe UI", Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", "Segoe UI", Helvetica, Arial, sans-serif;
   background-color: var(--paper);
   color: var(--cw-black);
   line-height: 1.5;
@@ -311,15 +311,84 @@ body {
   gap: 10px;
 }
 
-.footnote {
-  margin-top: 18px;
-  font-size: 0.82rem;
+/* difficulty picker */
+.difficulty {
+  display: flex;
+  gap: 8px;
+}
+
+.diff-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 2px solid var(--cw-black);
+  background-color: #fff;
+  color: var(--cw-black);
+}
+
+.diff-btn.active {
+  background-color: var(--cw-black);
+  color: #fff;
+}
+
+.difficulty-note {
+  font-size: 0.8rem;
   color: #6b7785;
+  margin-top: -4px;
+}
+
+/* footer */
+.site-footer {
+  background-color: var(--cw-black);
+  color: #fff;
+  padding: 32px 16px;
+  margin-top: 24px;
+}
+
+.footer-inner {
+  max-width: 760px;
+  margin: 0 auto;
   text-align: center;
 }
 
-.footnote a {
+.footer-lead {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cw-yellow);
+  margin-bottom: 8px;
+}
+
+.footer-text {
+  font-size: 0.88rem;
+  color: #c9d1d9;
+  max-width: 58ch;
+  margin: 0 auto 16px;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 22px;
+  margin-bottom: 16px;
+}
+
+.footer-links a {
   color: var(--cw-blue);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.footer-links a:hover {
+  color: var(--cw-yellow);
+}
+
+.footer-fine {
+  font-size: 0.75rem;
+  color: #8b949e;
 }
 
 /* phones */
@@ -350,7 +419,12 @@ body {
 
   .controls {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+
+  .btn {
+    padding: 11px 14px;
+    font-size: 0.9rem;
   }
 
   .overlay-title { font-size: 1.3rem; }

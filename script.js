@@ -1,10 +1,45 @@
 // Drop Catch, a charity: water prototype
 
 const GAME_SECONDS = 30;
-const GOAL = 40;
 const CLEAN_VALUE = 2; // litres per clean drop
 const DUMP_COST = 5; // litres it costs to clear a contaminated can
 const CONTAMINATION_MS = 6000; // how long contamination lasts on its own
+
+// Difficulty settings. Each one changes the goal, the pace and the risk.
+const DIFFICULTIES = {
+  easy: {
+    goal: 30,
+    spawnMs: 820,
+    minFall: 3.0,
+    maxFall: 4.6,
+    badRate: 0.2,
+    note: "Easy: 30 litres, slow drops, little contamination.",
+  },
+  normal: {
+    goal: 40,
+    spawnMs: 650,
+    minFall: 2.4,
+    maxFall: 4.0,
+    badRate: 0.3,
+    note: "Normal: 40 litres, steady drops, some contamination.",
+  },
+  hard: {
+    goal: 55,
+    spawnMs: 480,
+    minFall: 1.6,
+    maxFall: 2.8,
+    badRate: 0.42,
+    note: "Hard: 55 litres, fast drops, dirty water everywhere.",
+  },
+};
+
+// LevelUp: milestone messages held in an array and triggered by conditionals
+const MILESTONES = [
+  { at: 10, text: "10 litres. That is one person's drinking water for a day." },
+  { at: 20, text: "20 litres. A family has enough to cook and drink." },
+  { at: 30, text: "30 litres. A week of drinking water for one person." },
+  { at: 45, text: "45 litres. More than most people carry home in a day." },
+];
 
 // Page elements
 const field = document.getElementById("field");
@@ -19,26 +54,78 @@ const overlayText = document.getElementById("overlayText");
 const startBtn = document.getElementById("startBtn");
 const dumpBtn = document.getElementById("dumpBtn");
 const resetBtn = document.getElementById("resetBtn");
+const muteBtn = document.getElementById("muteBtn");
+const diffButtons = document.querySelectorAll(".diff-btn");
+const diffNote = document.getElementById("difficultyNote");
 const canvas = document.getElementById("confetti");
 
 // Game state
+let level = "normal";
+let settings = DIFFICULTIES[level];
 let score = 0;
 let timeLeft = GAME_SECONDS;
 let running = false;
 let contaminated = false;
+let milestoneIndex = 0;
 
 let spawnTimer = null;
 let countdownTimer = null;
 let contaminationTimer = null;
 
-goalDisplay.textContent = GOAL;
+goalDisplay.textContent = settings.goal;
+
+// LevelUp: sound effects, generated in the browser so there are no files to load
+let audioCtx = null;
+let soundOn = true;
+
+function playTone(frequency, seconds, shape) {
+  if (!soundOn) return;
+
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = shape || "sine";
+    osc.frequency.value = frequency;
+
+    gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + seconds);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + seconds);
+  } catch (error) {
+    // Some browsers block audio until the user interacts. The game still works.
+  }
+}
+
+function soundCatch() {
+  playTone(880, 0.12, "sine");
+}
+
+function soundBad() {
+  playTone(150, 0.3, "sawtooth");
+}
+
+function soundWin() {
+  playTone(660, 0.18, "sine");
+  setTimeout(function () { playTone(880, 0.18, "sine"); }, 160);
+  setTimeout(function () { playTone(1175, 0.3, "sine"); }, 320);
+}
 
 // Keeps the numbers on screen in step with the state
 function render() {
   scoreDisplay.textContent = score;
   timeDisplay.textContent = timeLeft;
+  goalDisplay.textContent = settings.goal;
 
-  const percent = Math.min((score / GOAL) * 100, 100);
+  const percent = Math.min((score / settings.goal) * 100, 100);
   progressFill.style.width = percent + "%";
   progressFill.style.backgroundColor = contaminated ? "#8a6a44" : "#2e9df7";
 
@@ -49,6 +136,17 @@ function render() {
 function setStatus(text, tone) {
   statusLine.textContent = text;
   statusLine.className = "status" + (tone ? " " + tone : "");
+}
+
+// Checks the milestone array against the current score
+function checkMilestones() {
+  while (milestoneIndex < MILESTONES.length && score >= MILESTONES[milestoneIndex].at) {
+    const reached = MILESTONES[milestoneIndex];
+    if (reached.at < settings.goal) {
+      setStatus(reached.text, "good");
+    }
+    milestoneIndex++;
+  }
 }
 
 // Floating +2 or -1 where the player clicked
@@ -80,7 +178,7 @@ function clearContamination() {
 
 // Makes one drop and drops it down the field
 function spawnDrop() {
-  const isBad = Math.random() < 0.3;
+  const isBad = Math.random() < settings.badRate;
 
   const drop = document.createElement("button");
   drop.type = "button";
@@ -88,8 +186,9 @@ function spawnDrop() {
   drop.setAttribute("aria-label", isBad ? "Contaminated drop" : "Clean water drop");
 
   // Random position and speed so no two rounds feel the same
+  const span = settings.maxFall - settings.minFall;
   drop.style.left = Math.random() * (field.clientWidth - 46) + "px";
-  drop.style.animationDuration = (2.4 + Math.random() * 1.6) + "s";
+  drop.style.animationDuration = (settings.minFall + Math.random() * span) + "s";
 
   drop.addEventListener("click", function () {
     if (!running) return;
@@ -101,11 +200,13 @@ function spawnDrop() {
       // The challenge mechanic: catching dirt costs you and spoils the can
       score = Math.max(0, score - 1);
       showPop("-1", false, x, y);
+      soundBad();
       startContamination();
     } else {
       const gained = contaminated ? CLEAN_VALUE / 2 : CLEAN_VALUE;
       score = score + gained;
       showPop("+" + gained, true, x, y);
+      soundCatch();
       if (!contaminated) {
         setStatus("Clean water collected.", "good");
       }
@@ -113,6 +214,7 @@ function spawnDrop() {
 
     drop.remove();
     render();
+    checkMilestones();
     checkWin();
   });
 
@@ -125,7 +227,7 @@ function spawnDrop() {
 }
 
 function checkWin() {
-  if (score >= GOAL) {
+  if (score >= settings.goal) {
     endGame(true);
   }
 }
@@ -134,13 +236,14 @@ function startGame() {
   score = 0;
   timeLeft = GAME_SECONDS;
   running = true;
+  milestoneIndex = 0;
   clearContamination();
 
   overlay.classList.add("hidden");
   setStatus("Go. Click the blue drops.", "");
   render();
 
-  spawnTimer = setInterval(spawnDrop, 650);
+  spawnTimer = setInterval(spawnDrop, settings.spawnMs);
 
   countdownTimer = setInterval(function () {
     timeLeft = timeLeft - 1;
@@ -172,13 +275,15 @@ function endGame(won) {
   if (won) {
     overlayTitle.textContent = "Goal reached";
     overlayText.textContent =
-      "You delivered " + score + " litres of clean water with " + timeLeft + " seconds to spare.";
+      "You delivered " + score + " litres of clean water on " + level +
+      " with " + timeLeft + " seconds to spare.";
     setStatus("You hit the goal.", "good");
+    soundWin();
     launchConfetti();
   } else {
     overlayTitle.textContent = "Time's up";
     overlayText.textContent =
-      "You delivered " + score + " litres out of " + GOAL + ". Dirty water is the difference.";
+      "You delivered " + score + " litres out of " + settings.goal + ". Dirty water is the difference.";
     setStatus("Round over.", "");
   }
 
@@ -196,6 +301,7 @@ function resetGame() {
   score = 0;
   timeLeft = GAME_SECONDS;
   contaminated = false;
+  milestoneIndex = 0;
 
   overlayTitle.textContent = "Catch the clean water";
   overlayText.textContent =
@@ -229,6 +335,7 @@ function launchConfetti() {
     });
   }
 
+  cancelAnimationFrame(confettiFrame);
   drawConfetti();
 }
 
@@ -258,6 +365,24 @@ function stopConfetti() {
   }
 }
 
+// Difficulty buttons
+diffButtons.forEach(function (button) {
+  button.addEventListener("click", function () {
+    if (running) return;
+
+    level = button.dataset.level;
+    settings = DIFFICULTIES[level];
+
+    diffButtons.forEach(function (other) {
+      other.classList.remove("active");
+    });
+    button.classList.add("active");
+
+    diffNote.textContent = settings.note;
+    render();
+  });
+});
+
 // Buttons
 startBtn.addEventListener("click", function () {
   stopConfetti();
@@ -273,5 +398,11 @@ dumpBtn.addEventListener("click", function () {
 });
 
 resetBtn.addEventListener("click", resetGame);
+
+muteBtn.addEventListener("click", function () {
+  soundOn = !soundOn;
+  muteBtn.textContent = soundOn ? "Sound on" : "Sound off";
+  muteBtn.setAttribute("aria-pressed", soundOn ? "false" : "true");
+});
 
 render();
